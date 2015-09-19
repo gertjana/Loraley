@@ -6,3 +6,6 @@ Test project that uses
  - Akka Persitence (store package information)
  
  
+to start
+ - optionally configure address/ports in application.conf
+ - sbt run
