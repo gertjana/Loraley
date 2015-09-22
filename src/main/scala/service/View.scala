@@ -1,7 +1,9 @@
-import Store.{State, Evt}
+package service
+
 import akka.actor.Props
 import akka.persistence.PersistentView
 import com.typesafe.config.ConfigFactory
+import service.Store.{Evt, State}
 
 class View() extends PersistentView {
   import View._
@@ -26,6 +28,7 @@ class View() extends PersistentView {
 object View {
   def props() = Props(new View())
 
-  case class Get(id:String)
-  case object GetAll
+  sealed trait ViewMessages
+  case class Get(id:String) extends ViewMessages
+  case object GetAll extends ViewMessages
 }

@@ -1,20 +1,24 @@
-import View.{GetAll, Get}
+package service
+
+import service.Store.Purge
+import service.View.{GetAll, Get}
 import akka.actor.ActorRef
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives._
-import akka.util.Timeout
-import com.typesafe.config.ConfigFactory
-import spray.json.DefaultJsonProtocol
+
 import akka.pattern.ask
-import scala.concurrent.duration._
+import akka.util.Timeout
+import model.LoraPacket
 import spray.json._
+
+import scala.concurrent.duration._
 
 trait HttpService extends Protocols {
   def viewActor:ActorRef
+  def storeActor:ActorRef
 
-  implicit val timeout = Timeout(5 seconds)
+  implicit val timeout = Timeout(Duration(5,"seconds"))
 
   val routes =
     path("status") {
@@ -27,21 +31,24 @@ trait HttpService extends Protocols {
     path("state") {
       get {
         complete {
-          (viewActor ? GetAll).mapTo[Map[String, Vector[String]]]
+          (viewActor ? GetAll).mapTo[Map[String, Vector[LoraPacket]]]
         }
       }
     } ~
       path("state" / Segment) { id =>
         get {
           complete {
-            (viewActor ? Get(id)).mapTo[Vector[String]]
+            (viewActor ? Get(id)).mapTo[Vector[LoraPacket]]
           }
         }
+    } ~
+    path("purge") {
+      get {
+        complete {
+          storeActor ! Purge()
+          OK
+        }
+      }
     }
 }
-
-trait Protocols extends DefaultJsonProtocol {
-  //custom json protocols here
-}
-
 

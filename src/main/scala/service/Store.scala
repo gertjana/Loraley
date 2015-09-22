@@ -1,6 +1,9 @@
-import akka.actor.{Props, ActorLogging}
-import akka.persistence.{SnapshotOffer, PersistentActor}
+package service
+
+import akka.actor.{ActorLogging, Props}
+import akka.persistence.{PersistentActor, SnapshotOffer}
 import com.typesafe.config.ConfigFactory
+import model.LoraPacket
 
 class Store extends PersistentActor with ActorLogging {
   import Store._
@@ -21,22 +24,25 @@ class Store extends PersistentActor with ActorLogging {
   override def persistenceId: String = config.getString("app.persistence-id")
 
   override def receiveCommand = {
-    case Persist(msg:(String,String)) => {
+    case Persist(msg:(String,LoraPacket)) => {
       //TODO validate msg before persisting
       persist(Evt(msg))(updateState)
     }
+    case Purge() => deleteMessages(lastSequenceNr)
   }
 }
 
 object Store {
   def props() = Props(new Store)
 
-  case class Persist(msg:(String,String))
-  case class Evt(msg: (String,String))
+  sealed trait StoreMessages
+  case class Persist(msg:(String,LoraPacket)) extends StoreMessages
+  case class Evt(msg: (String,LoraPacket)) extends StoreMessages
+  case class Purge() extends StoreMessages
 
-  case class State(events:Map[String, Vector[String]] = Map.empty) {
+  case class State(events:Map[String, Vector[LoraPacket]] = Map.empty) {
     def updated(event:Evt) = {
-      val result:Map[String, Vector[String]] =
+      val result:Map[String, Vector[LoraPacket]] =
         if (events.contains(event.msg._1)) {
           events + (event.msg._1 -> (events(event.msg._1) :+ event.msg._2))
         } else {

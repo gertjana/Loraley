@@ -8,7 +8,7 @@ version      := "1.0"
 
 scalaVersion := "2.11.7"
 
-scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
+scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8")
 
 resolvers += "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/"
 
@@ -35,7 +35,7 @@ libraryDependencies ++= {
 
 fork := true
 
-val mainClazz = Some("Boot")
+val mainClazz = Some("boot.Main")
 
 mainClass in (Compile, run) := mainClazz
 

@@ -1,6 +1,8 @@
+package service
+
 import java.net.InetSocketAddress
 
-import akka.actor.{ActorLogging, Props, Actor, ActorRef}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.io.{IO, Udp}
 import akka.util.ByteString
 

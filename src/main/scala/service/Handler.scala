@@ -1,6 +1,9 @@
+package service
+
 import akka.actor.{ActorLogging, Props}
-import akka.stream.actor.ActorSubscriberMessage.{OnError, OnComplete, OnNext}
-import akka.stream.actor.{ZeroRequestStrategy, ActorSubscriber}
+import akka.stream.actor.ActorSubscriberMessage.{OnComplete, OnError, OnNext}
+import akka.stream.actor.{ActorSubscriber, ZeroRequestStrategy}
+import model.LoraPacket
 
 class Handler() extends ActorSubscriber  with ActorLogging {
 
@@ -13,7 +16,7 @@ class Handler() extends ActorSubscriber  with ActorLogging {
   val store = context.actorOf(Store.props())
 
   def receive = {
-    case OnNext(msg: (String,String)) => {
+    case OnNext(msg: (String,LoraPacket)) => {
       store ! Store.Persist(msg)
       request(1)
     }
