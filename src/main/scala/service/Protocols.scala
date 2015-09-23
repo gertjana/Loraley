@@ -1,5 +1,6 @@
 package service
 
+import com.hazelcast.core.IMap
 import model.LoraPacket
 import spray.json._
 

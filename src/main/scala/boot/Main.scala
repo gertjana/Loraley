@@ -21,8 +21,13 @@ object Main extends HttpService {
   implicit val executor = system.dispatcher
   implicit val materializer = ActorMaterializer()
 
-  def viewActor = system.actorOf(View.props())
-  def storeActor = system.actorOf(Store.props())
+  // Akka Persistence
+//  def viewActor = system.actorOf(View.props())
+//  def storeActor = system.actorOf(Store.props())
+
+  // Hazelcast
+  def viewActor = system.actorOf(HazelcastView.props())
+  def storeActor = system.actorOf(HazelcastStore.props())
 
   def main(args:Array[String]) = {
 
@@ -32,7 +37,7 @@ object Main extends HttpService {
 
     val remoteAddress = new InetSocketAddress(config.getString("app.udp.address"), config.getInt("app.udp.port"))
 
-    val handler = system.actorOf(Handler.props())
+    val handler = system.actorOf(Handler.props(storeActor))
     val listener = system.actorOf(Listener.props(remoteAddress))
 
     composeStream(listener, handler)

@@ -28,17 +28,17 @@ class Store extends PersistentActor with ActorLogging {
       //TODO validate msg before persisting
       persist(Evt(msg))(updateState)
     }
-    case Purge() => deleteMessages(lastSequenceNr)
+    case Purge() => {
+      log.debug("Purging event store")
+      deleteMessages(lastSequenceNr)
+    }
+    case m@_ => println("Unknown: " + m)
   }
 }
 
+
 object Store {
   def props() = Props(new Store)
-
-  sealed trait StoreMessages
-  case class Persist(msg:(String,LoraPacket)) extends StoreMessages
-  case class Evt(msg: (String,LoraPacket)) extends StoreMessages
-  case class Purge() extends StoreMessages
 
   case class State(events:Map[String, Vector[LoraPacket]] = Map.empty) {
     def updated(event:Evt) = {

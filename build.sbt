@@ -28,6 +28,8 @@ libraryDependencies ++= {
     "com.typesafe.akka"           %% "akka-persistence-experimental"        % akkaPersistenceV,
     "org.iq80.leveldb"            % "leveldb"                               % "0.7",
     "org.fusesource.leveldbjni"   % "leveldbjni-all"                        % "1.8",
+    "com.hazelcast"               % "hazelcast"                             % "3.2",
+    "com.hazelcast"               % "hazelcast-client"                      % "3.2",
     "org.scalatest"               %% "scalatest"                            % scalaTestV % "test",
     "ch.qos.logback"              % "logback-classic"                       % "1.0.0" % "runtime"
   )
