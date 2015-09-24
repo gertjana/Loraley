@@ -46,13 +46,15 @@ object Main extends HttpService {
 
     Http().bindAndHandle(routes, config.getString("app.http.address"), config.getInt("app.http.port"))
 
-    val remoteAddress = new InetSocketAddress(config.getString("app.udp.address"), config.getInt("app.udp.port"))
+    if (config.getBoolean("app.udp.enabled")) {
+      val remoteAddress = new InetSocketAddress(config.getString("app.udp.address"), config.getInt("app.udp.port"))
 
-    val handler = system.actorOf(Handler.props(storeActor))
-    val listener = system.actorOf(Listener.props(remoteAddress))
+      val handler = system.actorOf(Handler.props(storeActor))
+      val listener = system.actorOf(Listener.props(remoteAddress))
 
-    composeStream(listener, handler)
-      .run()
+      composeStream(listener, handler)
+        .run()
+    }
 
     Runtime.getRuntime.addShutdownHook(new Thread() {
       override def run() = {

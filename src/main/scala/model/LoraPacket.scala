@@ -2,7 +2,7 @@ package model
 
 import spray.json.JsObject
 
-//case class Payload(data:JsObject)
+case class Payload(data:JsObject)
 
 case class LoraPacket(
   id:String,
@@ -20,6 +20,6 @@ case class LoraPacket(
   snr_min:Double,
   snr_max:Double,
   crc:Int,
-  size:Int //,
-  //payload :Payload
+  size:Int,
+  payload :Payload
 )

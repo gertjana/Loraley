@@ -14,12 +14,8 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends Actor with Ac
 
   def receive = {
     case Persist(msg) => {
-      if (packets.containsKey(msg._1)) {
-        val values = packets.get(msg._1) :+ msg._2
-        packets.put(msg._1, values)
-      } else {
-        packets.put(msg._1, Vector(msg._2))
-      }
+      if (packets.containsKey(msg._1)) packets.put(msg._1, packets.get(msg._1) :+ msg._2)
+      else packets.put(msg._1, Vector(msg._2))
     }
     case Purge() => packets.clear()
   }

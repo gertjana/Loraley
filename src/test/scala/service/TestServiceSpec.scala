@@ -13,7 +13,7 @@ import com.hazelcast.client.HazelcastClient
 import com.hazelcast.client.config.ClientConfig
 import com.hazelcast.config.Config
 import com.hazelcast.core.Hazelcast
-import model.LoraPacket
+import model.{Payload, LoraPacket}
 import org.scalatest._
 
 import spray.json._
@@ -50,9 +50,16 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
 
   boot.Main.composeStream(testListener, testHandler).run()
 
-  val loraPacket1 = LoraPacket("A43E09F1", 1,0,0,0,0,0,0,"",0,0,0,0,0,0,0)
-  val loraPacket2 = LoraPacket("A43E09F1", 2,0,0,0,0,0,0,"",0,0,0,0,0,0,0)
-  val loraPacket3 = LoraPacket("A43E09F2", 3,0,0,0,0,0,0,"",0,0,0,0,0,0,0)
+  val payload = Payload("""
+    {
+      "temperature" : 25,
+      "timestamp" : "2015-09-21T13:45:00Z"
+    }
+    """.trim().parseJson.asJsObject)
+
+  val loraPacket1 = LoraPacket("A43E09F1", 1,0,0,0,0,0,0,"",0,0,0,0,0,0,0, payload)
+  val loraPacket2 = LoraPacket("A43E09F1", 2,0,0,0,0,0,0,"",0,0,0,0,0,0,0, payload)
+  val loraPacket3 = LoraPacket("A43E09F2", 3,0,0,0,0,0,0,"",0,0,0,0,0,0,0, payload)
 
   println(loraPacket1.toJson.compactPrint)
   def data(p:LoraPacket) = ByteString(p.toJson.compactPrint)

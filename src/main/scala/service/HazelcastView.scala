@@ -11,15 +11,13 @@ class HazelcastView(hazelcastClient:HazelcastInstance) extends Actor with ActorL
 
   val config = ConfigFactory.load()
 
-  val packets = hazelcastClient.getMap[String, Vector[LoraPacket]](config.getString("app.hazelcast.packetstore"))
+  def packets:Map[String, Vector[LoraPacket]] =
+    hazelcastClient.getMap[String, Vector[LoraPacket]](config.getString("app.hazelcast.packetstore")).toMap
+
 
   def receive = {
-    case GetAll => {
-      sender ! (packets.keys.toList zip packets.values.toList).toMap
-    }
-    case Get(id) => {
-      sender ! packets.get(id)
-    }
+    case GetAll  => sender ! packets
+    case Get(id) => sender ! packets.get(id)
   }
 }
 
