@@ -3,7 +3,7 @@
 Test project that uses
  - Akka Http (UDP / HTTP connection)
  - Akka Reactive Streams (parse/transform udp packets)
- - Akka Persitence or Hazelcast (store package information)
+ - Akka Persistence or Hazelcast (store package information)
  
 to start
  - optionally configure address/ports in application.conf
