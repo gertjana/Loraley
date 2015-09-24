@@ -5,7 +5,11 @@
         </encoder>
     </appender>
 
-    <root level="debug">
+    <logger name="com.hazelcast" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
+    <root level="ERROR">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

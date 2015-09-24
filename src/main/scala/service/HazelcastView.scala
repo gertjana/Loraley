@@ -1,16 +1,17 @@
 package service
 
 import akka.actor.{Props, ActorLogging, Actor}
-import com.hazelcast.client.HazelcastClient
-import com.hazelcast.client.config.ClientConfig
+import com.hazelcast.core.HazelcastInstance
+import com.typesafe.config.ConfigFactory
 import model.LoraPacket
 
 import scala.collection.JavaConversions._
 
-class HazelcastView extends Actor with ActorLogging {
+class HazelcastView(hazelcastClient:HazelcastInstance) extends Actor with ActorLogging {
 
-  val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
-  val packets = hazelcastClient.getMap[String, Vector[LoraPacket]]("lorapackets")
+  val config = ConfigFactory.load()
+
+  val packets = hazelcastClient.getMap[String, Vector[LoraPacket]](config.getString("app.hazelcast.packetstore"))
 
   def receive = {
     case GetAll => {
@@ -23,5 +24,5 @@ class HazelcastView extends Actor with ActorLogging {
 }
 
 object HazelcastView {
-  def props() = Props(new HazelcastView())
+  def props(hazelcastClient:HazelcastInstance) = Props(new HazelcastView(hazelcastClient))
 }
