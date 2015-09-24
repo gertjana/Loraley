@@ -7,7 +7,8 @@ Test project that uses
  
 to start
  - optionally configure address/ports in application.conf
- - sbt run
+ - `sbt run` or
+ - `sbt assembly` and then `java -jar target/scala_2.11/udp-streaming-test.jar`
 
 run as a cluster
  - create multiple fat jars using `sbt assembly` with in each an unique application.conf
