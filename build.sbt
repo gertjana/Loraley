@@ -1,5 +1,3 @@
-import sbtassembly.AssemblyPlugin.autoImport._
-
 name         := "udp-streaming-test"
 
 organization := "net.addictivesoftware"
@@ -28,6 +26,8 @@ libraryDependencies ++= {
     "com.typesafe.akka"           %% "akka-persistence-experimental"        % akkaPersistenceV,
     "org.iq80.leveldb"            % "leveldb"                               % "0.7",
     "org.fusesource.leveldbjni"   % "leveldbjni-all"                        % "1.8",
+    "joda-time"                   % "joda-time"                             % "2.6",
+    "org.joda"                    % "joda-convert"                          % "1.7",
     "com.hazelcast"               % "hazelcast"                             % "3.2",
     "com.hazelcast"               % "hazelcast-client"                      % "3.2",
     "org.scalatest"               %% "scalatest"                            % scalaTestV % "test",
@@ -38,11 +38,3 @@ libraryDependencies ++= {
 fork := true
 
 val mainClazz = Some("boot.Main")
-
-mainClass in (Compile, run) := mainClazz
-
-mainClass in assembly := mainClazz
-
-test in assembly := {}
-
-assemblyJarName in assembly := s"udp-streaming-test.jar"
