@@ -3,7 +3,7 @@ package service
 import akka.actor.{Props, ActorLogging, Actor}
 import com.hazelcast.core.HazelcastInstance
 import com.typesafe.config.ConfigFactory
-import model.LoraPacket
+import model.{GatewayStatus, Packet, LoraPacket}
 
 import scala.collection.JavaConversions._
 
@@ -11,13 +11,17 @@ class HazelcastView(hazelcastClient:HazelcastInstance) extends Actor with ActorL
 
   val config = ConfigFactory.load()
 
-  def packets:Map[String, Vector[LoraPacket]] =
-    hazelcastClient.getMap[String, Vector[LoraPacket]](config.getString("app.hazelcast.packetstore")).toMap
+  val packets:Map[String, Vector[Packet]] =
+    hazelcastClient.getMap[String, Vector[Packet]](config.getString("app.hazelcast.packetstore")).toMap
 
+  val gatewayStatuses:Set[GatewayStatus] =
+    hazelcastClient.getSet[GatewayStatus](config.getString("app.hazelcast.gatewaystore")).to[Set]
 
   def receive = {
     case GetAll  => sender ! packets
     case Get(id) => sender ! packets.get(id)
+    case StatusAll => sender ! gatewayStatuses
+    case Status(id) => sender ! gatewayStatuses.filter(_.Gateway == id)
   }
 }
 

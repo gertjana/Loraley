@@ -8,6 +8,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.pattern.ask
 import akka.util.Timeout
 import model.LoraPacket
+import org.joda.time.format.ISODateTimeFormat
 import spray.json._
 
 import scala.concurrent.duration._
@@ -40,10 +41,11 @@ trait HttpService extends Protocols {
           }
         }
     } ~
-    path("purge") {
+    path("purge" / Segment) { datetime =>
       get {
         complete {
-          storeActor ! Purge()
+          val dt = ISODateTimeFormat.dateTime().parseDateTime(datetime)
+          storeActor ! Purge(dt)
           OK
         }
       }

@@ -1,25 +1,57 @@
 package model
 
+import org.joda.time.DateTime
 import spray.json.JsObject
 
-case class Payload(data:JsObject)
+sealed trait Packets
+
+case class JsonData(data:JsObject)
+
+case class GatewayStatus(
+                        Gateway:String
+                          ) extends Packets
 
 case class LoraPacket(
-  id:String,
-  freq_hz:Long,
-  if_chain:Int,
-  status:Int,
-  count_us:Long,
-  rf_chain:Int,
-  modulation:Int,
-  bandwidth :Int,
-  datarate:String,
-  coderate :Int,
-  rssi:Double,
-  snr:Double,
-  snr_min:Double,
-  snr_max:Double,
-  crc:Int,
-  size:Int,
-  payload :Payload
-)
+                       Gateway:String,
+                       rxpk: List[Packet]
+                       ) extends Packets
+
+case class Packet(
+                   tmst:Long,
+                   time:DateTime,
+                   chan:Int,
+                   rfch:Int,
+                   freq:Double,
+                   stat:Int,
+                   modu:String,
+                   datr:String,
+                   codr:String,
+                   lsnr:Double,
+                   rssi:Int,
+                   size:Int,
+                   data:String,
+                   PHYPayload:Payload
+                   )
+
+case class Payload(
+                    MHDR: String,
+                    MType : Int,
+                    Major : Int,
+                    DevAddr : String,
+                    FCtrl : String,
+                    ADR : Boolean,
+                    ADRAckReq : Boolean,
+                    ACK : Boolean,
+                    FoptsLen : Int,
+                    FCnt : Int,
+                    FOpts : String,
+                    FPort : Int,
+                    FRMPayload : String,
+                    MIC : String,
+                    validMsg : Boolean,
+                    plainHex : String,
+                    plainAscii : String,
+                    plainJson : Option[JsonData]
+                    )
+
+
