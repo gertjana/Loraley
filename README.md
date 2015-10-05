@@ -1,4 +1,4 @@
-# UdpStreamingTest
+# Loraley
 
 Test project that uses
  - Akka Http (UDP / HTTP connection)
