@@ -1,3 +1,5 @@
+import com.typesafe.sbt.SbtNativePackager._
+
 name         := "Loraley"
 
 organization := "org.thethingsnetwork"
@@ -35,4 +37,6 @@ libraryDependencies ++= {
 
 fork := true
 
-val mainClazz = Some("boot.Main")
+enablePlugins(JavaAppPackaging)
+
+mainClass in Compile := Some("boot.Main")

@@ -24,10 +24,10 @@ for instance 2 packets with address 00:11:FF:AA and 00:22:FF:AA wil be stored li
 to start
  - optionally configure address/ports in application.conf
  - `sbt run` or
- - `sbt assembly` and then `java -jar target/scala_2.11/udp-streaming-test.jar`
+ - `sbt universal:packageBin` to create a zip distribution unpack and run `bin/loraley``
 
 run as a cluster
- - create multiple fat jars using `sbt assembly` with in each an unique application.conf
+ - create multiple distributions using `sbt universal:packageBin` and put an unique application.conf in each
   - enable udp on only one
   - make sure http and hazelcast ports are unique 
   - start all with `java -jar name-of.jar`
