@@ -12,13 +12,13 @@ Uses hierarchical model
 
 for instance 2 packets with address 00:11:FF:AA and 00:22:FF:AA wil be stored like:
 
-RootActor
- \-> 0 (first char of address)
-   \-> 0 (second char of address)
-     |-> 1 (third char of address)
-     |  \-> 1 (package 00:11:FF:AA will be stored here)
-     \-> 2 (third char of second address
-        \-> 2 (package 00:22:FF:AA will be stored here)
+    RootActor
+     \-> 0 (first char of address)
+       \-> 0 (second char of address)
+         |-> 1 (third char of address)
+         |  \-> 1 (package 00:11:FF:AA will be stored here)
+         \-> 2 (third char of second address
+            \-> 2 (package 00:22:FF:AA will be stored here)
         
 
 to start
