@@ -6,6 +6,7 @@ import org.joda.time.DateTime
 sealed trait StorageMessages
 final case class Persist(msg:Packets) extends StorageMessages
 final case class Purge(datetime:DateTime) extends StorageMessages
+case object Status extends StorageMessages
 
 sealed trait ViewMessages
 final case class Get(id:String) extends ViewMessages

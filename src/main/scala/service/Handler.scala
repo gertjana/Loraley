@@ -17,7 +17,9 @@ class Handler(store:ActorRef) extends ActorSubscriber with ActorLogging {
   def receive = {
     case OnNext(msg: Option[Packets]) => {
       msg match {
-        case Some(p) => store ! Persist(p)
+        case Some(p) => {
+          store ! Persist(p)
+        }
         case None => log.error("Unknown message received")
       }
       request(1)

@@ -33,12 +33,11 @@ object Main extends HttpService {
   val config = ConfigFactory.load()
 
   val hazelcastConfig = new Config()
-  hazelcastConfig.setProperty("hazelcast.logging.type", "slf4j")
   val hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConfig)
   val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
 
   def viewActor = system.actorOf(HazelcastView.props(hazelcastClient))
-  def storeActor = system.actorOf(HazelcastStore.props(hazelcastInstance))
+  def storeActor = system.actorOf(RootActor.props(hazelcastInstance))
 
   def main(args:Array[String]) = {
 
@@ -77,6 +76,7 @@ object Main extends HttpService {
   private def decrypt(text: String) = text // considered unencrypted for now
 
   private def extractPacket(text:String):Option[Packets] = {
+    text.parseJson.convertTo[LoraPacket]
     ( Try {text.parseJson.convertTo[LoraPacket]}.toOption ::
       Try {text.parseJson.convertTo[GatewayStatus]}.toOption ::
       Nil

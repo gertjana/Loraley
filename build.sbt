@@ -1,6 +1,6 @@
-name         := "udp-streaming-test"
+name         := "Loraley"
 
-organization := "net.addictivesoftware"
+organization := "org.thethingsnetwork"
 
 version      := "1.0"
 
@@ -11,8 +11,7 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf
 resolvers += "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/"
 
 libraryDependencies ++= {
-  val akkaV             = "2.4-M2"
-  val akkaPersistenceV  = "2.4-M2"
+  val akkaV             = "2.4.0"
   val akkaStreamV       = "1.0"
   val scalaTestV        = "2.2.5"
   Seq(
@@ -23,7 +22,6 @@ libraryDependencies ++= {
     "com.typesafe.akka"           %% "akka-http-experimental"               % akkaStreamV,
     "com.typesafe.akka"           %% "akka-http-spray-json-experimental"    % akkaStreamV,
     "com.typesafe.akka"           %% "akka-http-testkit-experimental"       % akkaStreamV,
-    "com.typesafe.akka"           %% "akka-persistence-experimental"        % akkaPersistenceV,
     "org.iq80.leveldb"            % "leveldb"                               % "0.7",
     "org.fusesource.leveldbjni"   % "leveldbjni-all"                        % "1.8",
     "joda-time"                   % "joda-time"                             % "2.6",

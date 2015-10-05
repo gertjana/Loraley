@@ -30,14 +30,14 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
   implicit val mat: Materializer = ActorMaterializer()
   implicit val log: LoggingAdapter = Logging(system, this.getClass)
 
-  val localAddress = new InetSocketAddress("localhost",9999)
+  val localAddress = new InetSocketAddress("127.0.0.1",9999)
 
   // Hazelcast
   val hazelcastConfig = new Config()
   hazelcastConfig.setProperty( "hazelcast.logging.type", "none" )
   val hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConfig)
   val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
-  val testStorage = TestActorRef[HazelcastStore](HazelcastStore.props(hazelcastInstance))
+  val testStorage = TestActorRef[RootActor](RootActor.props(hazelcastInstance))
   val testView = TestActorRef[HazelcastView](HazelcastView.props(hazelcastClient))
 
   val testListener = TestActorRef[Listener](Listener.props(localAddress))
@@ -90,12 +90,20 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
       |  } ]
       |}
     """.stripMargin
+
   val loraPacket1 = loraPacket.parseJson.convertTo[LoraPacket]
   val loraPacket2 = loraPacket.replace("00:01:FF:AA","00:01:FF:BB").parseJson.convertTo[LoraPacket]
   val loraPacket3 = loraPacket.replace("00:01:FF:AA","00:01:FF:CC").parseJson.convertTo[LoraPacket]
 
-  println(loraPacket1.toJson.compactPrint)
   def data(p:LoraPacket) = ByteString(p.toJson.compactPrint)
+
+  private def randomAddress:String = {
+    import scala.collection.JavaConversions._
+    val bytes:Array[Byte] = Array[Byte](0,0,0,0)
+    new scala.util.Random().nextBytes(bytes)
+    bytes.map(b => String.format("%02x", b.asInstanceOf[java.lang.Byte])).mkString(":").toUpperCase
+  }
+
 
   "The Service" should {
     "be able to store Lora Packets when receiving udp packets" in {
@@ -115,7 +123,37 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
 
       Thread.sleep(1000)
     }
+
+    "Create a bunch of actors if messages with random id's are sent" in {
+      testStorage ! Purge(DateTime.now().minusYears(100))
+
+      testListener ! Udp.Bound(localAddress)
+      (1 to 500).foreach { i =>
+        val packet = loraPacket.replace("00:01:FF:AA", randomAddress).parseJson.convertTo[LoraPacket]
+        testListener ! Udp.Received(data(packet), localAddress)
+      }
+      val status = (testStorage ? Status).mapTo[String]
+      println(status)
+    }
+
+    "Create a bunch of actors with similar addresses" in {
+      testStorage ! Purge(DateTime.now().minusYears(100))
+
+      Thread.sleep(100)
+
+      testListener ! Udp.Bound(localAddress)
+
+      val addresses = List("01:23:45:67", "01:24:45:67", "02:23:45:67", "02:24:45:67")
+      addresses.foreach { address =>
+        val packet = loraPacket.replace("00:01:FF:AA", address).parseJson.convertTo[LoraPacket]
+        testListener ! Udp.Received(data(packet), localAddress)
+      }
+      val status = (testStorage ? Status).mapTo[String]
+      println(status)
+    }
   }
+
+
 
   override protected def afterAll(): Unit = {
     hazelcastInstance.shutdown()
