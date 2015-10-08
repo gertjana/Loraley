@@ -109,7 +109,7 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
 
 
   "The Service" should {
-    "be able to store Lora Packets when receiving udp packets" ignore {
+    "be able to store Lora Packets when receiving udp packets" in {
       testStorage ! Purge(DateTime.now().minusYears(100))
 
       Thread.sleep(100)
@@ -123,24 +123,21 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
       val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[LoraPacket]]], 5.seconds)
 
       result.size === 2
-
-      Thread.sleep(1000)
     }
 
     "Create a bunch of actors if messages with random id's are sent" in {
       testStorage ! Purge(DateTime.now().minusYears(100))
 
       testListener ! Udp.Bound(localAddress)
-      (1 to 10000).foreach { i =>
+      (1 to 100).foreach { i =>
         val packet = loraPacket.replace("00:01:FF:AA", randomAddress).parseJson.convertTo[LoraPacket]
         testListener ! Udp.Received(data(packet), localAddress)
       }
-      //val status = (testStorage ? Status).mapTo[String]
-      //println(status)
-      Thread.sleep(5000)
+      val status = (testStorage ? Status).mapTo[String]
+      println(status)
     }
 
-    "Create a bunch of actors with similar addresses" ignore {
+    "Create a bunch of actors with similar addresses" in {
       testStorage ! Purge(DateTime.now().minusYears(100))
 
       Thread.sleep(100)

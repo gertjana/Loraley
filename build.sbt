@@ -31,6 +31,7 @@ libraryDependencies ++= {
     "com.hazelcast"               % "hazelcast"                             % "3.2",
     "com.hazelcast"               % "hazelcast-client"                      % "3.2",
     "org.scalatest"               %% "scalatest"                            % scalaTestV % "test",
+    "org.slf4s"                   %% "slf4s-api"                            % "1.7.12",
     "ch.qos.logback"              % "logback-classic"                       % "1.0.0" % "runtime"
   )
 }
