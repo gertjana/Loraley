@@ -13,9 +13,9 @@ import spray.json._
 
 import scala.concurrent.duration._
 
-trait HttpService extends Protocols {
-  def viewActor:ActorRef
-  def storeActor:ActorRef
+class HttpService(va:ActorRef, sa:ActorRef) extends Protocols {
+  def viewActor:ActorRef = va
+  def storeActor:ActorRef = sa
 
   implicit val timeout = Timeout(Duration(5,"seconds"))
 

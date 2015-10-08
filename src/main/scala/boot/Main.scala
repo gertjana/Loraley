@@ -13,7 +13,6 @@ import com.hazelcast.client.HazelcastClient
 import com.hazelcast.client.config.ClientConfig
 import com.hazelcast.config.Config
 import com.hazelcast.core.Hazelcast
-import com.typesafe.config.ConfigFactory
 import model.{Packets, GatewayStatus, LoraPacket}
 import service._
 import spray.json._
@@ -23,25 +22,25 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Try
 
-object Main extends HttpService {
+object Main extends Protocols {
   implicit val system = ActorSystem("udp-streaming")
   implicit val executor = system.dispatcher
   implicit val materializer = ActorMaterializer()
 
   val log = Logging.getLogger(system,this)
 
-  val config = ConfigFactory.load()
-
-  val hazelcastConfig = new Config()
-  val hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConfig)
-  val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
-
-  def viewActor = system.actorOf(HazelcastView.props(hazelcastClient))
-  def storeActor = system.actorOf(RootActor.props(hazelcastInstance))
-
   def main(args:Array[String]) = {
+    val config = new Configuration(Try(args(0)).toOption).config
 
-    Http().bindAndHandle(routes, config.getString("app.http.address"), config.getInt("app.http.port"))
+    val hazelcastConfig = new Config()
+    val hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConfig)
+    val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
+
+    def viewActor = system.actorOf(HazelcastView.props(hazelcastClient, config))
+    def storeActor = system.actorOf(RootActor.props(hazelcastInstance,config))
+
+    val httpService = new HttpService(viewActor, storeActor)
+    Http().bindAndHandle(httpService.routes, config.getString("app.http.address"), config.getInt("app.http.port"))
 
     if (config.getBoolean("app.udp.enabled")) {
       val remoteAddress = new InetSocketAddress(config.getString("app.udp.address"), config.getInt("app.udp.port"))

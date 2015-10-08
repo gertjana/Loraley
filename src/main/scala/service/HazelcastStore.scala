@@ -2,14 +2,13 @@ package service
 
 import akka.actor.{Props, Actor, ActorLogging}
 import com.hazelcast.core.HazelcastInstance
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import model.{Packet, GatewayStatus, LoraPacket}
 import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 
-class HazelcastStore(hazelcastInstance: HazelcastInstance) extends Actor with ActorLogging {
-  val config = ConfigFactory.load()
+class HazelcastStore(hazelcastInstance: HazelcastInstance, config:Config) extends Actor with ActorLogging {
 
   val packets = hazelcastInstance.getMap[String, Vector[Packet]](config.getString("app.hazelcast.packetstore"))
   val gatewayStatuses = hazelcastInstance.getSet[GatewayStatus](config.getString("app.hazelcast.gatewaystore"))
@@ -43,6 +42,6 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends Actor with Ac
 }
 
 object HazelcastStore {
-  def props(hazelcastInstance:HazelcastInstance) = Props(new HazelcastStore(hazelcastInstance))
+  def props(hazelcastInstance:HazelcastInstance, config:Config) = Props(new HazelcastStore(hazelcastInstance, config))
 
 }

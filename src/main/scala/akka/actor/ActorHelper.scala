@@ -4,6 +4,8 @@ import akka.actor.dungeon.ChildrenContainer
 import akka.event.Logging
 
 object ActorHelper {
+
+  //be very careful using this in production, can cause OOM Exceptions and performance issues
   def printTree(root:ActorRef): String = {
     def printNode(node: ActorRef, indent: String): String = {
       node match {

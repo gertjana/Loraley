@@ -13,6 +13,7 @@ import com.hazelcast.client.HazelcastClient
 import com.hazelcast.client.config.ClientConfig
 import com.hazelcast.config.Config
 import com.hazelcast.core.Hazelcast
+import com.typesafe.config.ConfigFactory
 import model.LoraPacket
 import org.joda.time.DateTime
 import org.scalatest._
@@ -32,13 +33,15 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
 
   val localAddress = new InetSocketAddress("127.0.0.1",9999)
 
+  val config = ConfigFactory.load("test.application.conf")
+
   // Hazelcast
   val hazelcastConfig = new Config()
   hazelcastConfig.setProperty( "hazelcast.logging.type", "none" )
   val hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConfig)
   val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
-  val testStorage = TestActorRef[RootActor](RootActor.props(hazelcastInstance))
-  val testView = TestActorRef[HazelcastView](HazelcastView.props(hazelcastClient))
+  val testStorage = TestActorRef[RootActor](RootActor.props(hazelcastInstance, config))
+  val testView = TestActorRef[HazelcastView](HazelcastView.props(hazelcastClient, config))
 
   val testListener = TestActorRef[Listener](Listener.props(localAddress))
   val testHandler = TestActorRef[Handler](Handler.props(testStorage))
@@ -106,7 +109,7 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
 
 
   "The Service" should {
-    "be able to store Lora Packets when receiving udp packets" in {
+    "be able to store Lora Packets when receiving udp packets" ignore {
       testStorage ! Purge(DateTime.now().minusYears(100))
 
       Thread.sleep(100)
@@ -128,15 +131,16 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
       testStorage ! Purge(DateTime.now().minusYears(100))
 
       testListener ! Udp.Bound(localAddress)
-      (1 to 500).foreach { i =>
+      (1 to 10000).foreach { i =>
         val packet = loraPacket.replace("00:01:FF:AA", randomAddress).parseJson.convertTo[LoraPacket]
         testListener ! Udp.Received(data(packet), localAddress)
       }
-      val status = (testStorage ? Status).mapTo[String]
-      println(status)
+      //val status = (testStorage ? Status).mapTo[String]
+      //println(status)
+      Thread.sleep(5000)
     }
 
-    "Create a bunch of actors with similar addresses" in {
+    "Create a bunch of actors with similar addresses" ignore {
       testStorage ! Purge(DateTime.now().minusYears(100))
 
       Thread.sleep(100)

@@ -2,13 +2,12 @@ package service
 
 import akka.actor.{Props, ActorRef, ActorLogging, Actor}
 import com.hazelcast.core.HazelcastInstance
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import model.Packet
 
 import scala.collection.mutable
 
-class ChildActor(hazelcastInstance:HazelcastInstance) extends Actor with ActorLogging {
-  val config = ConfigFactory.load()
+class ChildActor(hazelcastInstance:HazelcastInstance, config:Config) extends Actor with ActorLogging {
   val children = mutable.Map[Char, ActorRef]()
 
   private def childActorName(deviceId:String, rest:String) =
@@ -28,7 +27,7 @@ class ChildActor(hazelcastInstance:HazelcastInstance) extends Actor with ActorLo
         case None => log.error(s"Child Actor ${childActorName(deviceId,rest)} not found, something is wrong")
       }
     } else {
-      val newChild = context.actorOf(ChildActor.props(hazelcastInstance),childActorName(deviceId,rest))
+      val newChild = context.actorOf(ChildActor.props(hazelcastInstance, config),childActorName(deviceId,rest))
       children.put(rest.head, newChild)
       newChild ! (payload, deviceId,rest.tail)
 
@@ -43,6 +42,6 @@ class ChildActor(hazelcastInstance:HazelcastInstance) extends Actor with ActorLo
 }
 
 object ChildActor {
-  def props(hazelcastInstance:HazelcastInstance) =
-    Props(new ChildActor(hazelcastInstance))
+  def props(hazelcastInstance:HazelcastInstance, config:Config) =
+    Props(new ChildActor(hazelcastInstance, config))
 }

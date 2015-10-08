@@ -2,13 +2,12 @@ package service
 
 import akka.actor._
 import com.hazelcast.core.HazelcastInstance
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import model.{GatewayStatus, LoraPacket, Packet}
 
 import scala.collection.mutable
 
-class RootActor(hazelcastInstance:HazelcastInstance) extends Actor with ActorLogging {
-  val config = ConfigFactory.load()
+class RootActor(hazelcastInstance:HazelcastInstance, config:Config) extends Actor with ActorLogging {
   val children = mutable.Map[Char, ActorRef]()
   val gatewayStatuses = hazelcastInstance.getSet[GatewayStatus](config.getString("app.hazelcast.gatewaystore"))
 
@@ -23,7 +22,7 @@ class RootActor(hazelcastInstance:HazelcastInstance) extends Actor with ActorLog
         case None => log.error(s"Child Actor ${childActorName(deviceId)} not found, something is wrong")
       }
     } else {
-      val newChild = context.actorOf(ChildActor.props(hazelcastInstance),childActorName(deviceId))
+      val newChild = context.actorOf(ChildActor.props(hazelcastInstance, config),childActorName(deviceId))
       children.put(deviceId.head, newChild)
       newChild ! (payload, deviceId, deviceId.tail)
     }
@@ -53,7 +52,7 @@ class RootActor(hazelcastInstance:HazelcastInstance) extends Actor with ActorLog
 }
 
 object RootActor {
-  def props(hazelcastInstance:HazelcastInstance) = Props(new RootActor(hazelcastInstance))
+  def props(hazelcastInstance:HazelcastInstance, config:Config) = Props(new RootActor(hazelcastInstance, config))
 }
 
 
