@@ -8,7 +8,6 @@ import akka.event.Logging
 import com.typesafe.config.ConfigFactory
 
 class Configuration(optFile:Option[String]) {
-  val log = Logging.getLogger(system,this)
 
   def config = optFile match {
     case Some(file) => {
