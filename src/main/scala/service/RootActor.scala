@@ -2,8 +2,8 @@ package service
 
 import akka.actor._
 import com.hazelcast.core.HazelcastInstance
-import com.typesafe.config.{Config, ConfigFactory}
-import model.{GatewayStatus, LoraPacket, Packet}
+import com.typesafe.config.Config
+import model.{GatewayStatus, Packet}
 
 import scala.collection.mutable
 
@@ -15,36 +15,37 @@ class RootActor(hazelcastInstance:HazelcastInstance, config:Config) extends Acto
     s"child-${deviceId.head}-${deviceId.tail}"
   }
 
-  private def handleMessage(deviceId:String, payload:Packet) = {
-    if (children.contains(deviceId.head)) {
-      children.get(deviceId.head) match {
-        case Some(child:ActorRef) => child ! (payload,deviceId, deviceId.tail)
-        case None => log.error(s"Child Actor ${childActorName(deviceId)} not found, something is wrong")
+  private def handlePacket(packet:Packet) = {
+    packet.PHYPayload.map(_.DevAddr.replace(":","")) match {
+      case Some(deviceId) => {
+        if (children.contains(deviceId.head)) {
+          children.get(deviceId.head) match {
+            case Some(child:ActorRef) => child ! (packet,deviceId, deviceId.tail)
+            case None => log.error(s"Child Actor ${childActorName(deviceId)} not found, something is wrong")
+          }
+        } else {
+          val newChild = context.actorOf(ChildActor.props(hazelcastInstance, config),childActorName(deviceId))
+          children.put(deviceId.head, newChild)
+          newChild ! (packet, deviceId, deviceId.tail)
+        }
       }
-    } else {
-      val newChild = context.actorOf(ChildActor.props(hazelcastInstance, config),childActorName(deviceId))
-      children.put(deviceId.head, newChild)
-      newChild ! (payload, deviceId, deviceId.tail)
+      case None => log.error(s"could not find a device address in the payload: $packet")
     }
+
   }
 
   private def storeGatewayStatus(gatewayStatus:GatewayStatus) = gatewayStatuses.add(gatewayStatus)
 
-  private def storeLoraPackets(loraPacket: LoraPacket) = {
-    loraPacket.rxpk.foreach(packet => {
-      val id = packet.PHYPayload.DevAddr.replace(":","")
-      handleMessage(id, packet)
-    })
-  }
-
   def receive = {
     case Persist(msg) => {
       msg match {
-        case loraPacket:LoraPacket => storeLoraPackets(loraPacket)
-        case gatewayStatus:GatewayStatus => storeGatewayStatus(gatewayStatus)
+        case loraPacket:Packet => handlePacket(loraPacket)
+
+        //case gatewayStatus:GatewayStatus => storeGatewayStatus(gatewayStatus)
       }
     }
     case Status => {
+      //TODO find another way to get a status of this system. this can OOM on large actor systems
       println(ActorHelper.printTree(self))
       sender ! ActorHelper.printTree(self)
     }

@@ -30,7 +30,7 @@ case class Packet(
                    rssi:Int,
                    size:Int,
                    data:String,
-                   PHYPayload:Payload
+                   PHYPayload:Option[Payload]
                    )
 
 case class Payload(
@@ -49,8 +49,8 @@ case class Payload(
                     FRMPayload : String,
                     MIC : String,
                     validMsg : Boolean,
-                    plainHex : String,
-                    plainAscii : String,
+                    plainHex : Option[String],
+                    plainAscii : Option[String],
                     plainJson : Option[JsonData]
                     )
 

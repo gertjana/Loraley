@@ -13,7 +13,7 @@ import com.hazelcast.client.HazelcastClient
 import com.hazelcast.client.config.ClientConfig
 import com.hazelcast.config.Config
 import com.hazelcast.core.Hazelcast
-import model.{Packets, GatewayStatus, LoraPacket}
+import model.{Packet, Packets, GatewayStatus, LoraPacket}
 import service._
 import spray.json._
 
@@ -63,23 +63,28 @@ object Main extends Protocols {
   def composeStream(publisher:ActorRef, subscriber:ActorRef) = {
 
     val source: Source[ByteString, _] = Source(ActorPublisher[ByteString](publisher))
-    val sink: Sink[Option[Packets], _] = Sink(ActorSubscriber[Option[Packets]](subscriber))
+    val sink: Sink[Packet, _] = Sink(ActorSubscriber[Packet](subscriber))
 
     source
       .map(_.decodeString("UTF-8").trim)
-      .map(decrypt)
       .map(extractPacket)
+      .mapConcat(identity)
       .to(sink)
   }
 
-  private def decrypt(text: String) = text // considered unencrypted for now
-
-  private def extractPacket(text:String):Option[Packets] = {
-    text.parseJson.convertTo[LoraPacket]
-    ( Try {text.parseJson.convertTo[LoraPacket]}.toOption ::
-      Try {text.parseJson.convertTo[GatewayStatus]}.toOption ::
+  //slightly different approach ignores anything outside of the [ .. ] before trying to parse it to Json
+  private def extractPacket(text:String):List[Packet] = {
+    if (text.contains("[") && text.contains("]")) {
+      val packets = text.substring(text.indexOf('['), text.lastIndexOf(']')+1)
+      Try{packets.parseJson.convertTo[List[Packet]]}.toOption match {
+        case Some(p) => p
+        case None =>
+          log.error(s"unable to parse $packets")
+          Nil
+      }
+    } else {
+      log.error(s"unable to recognize packet: $text")
       Nil
-    ).flatten.headOption
+    }
   }
-
 }

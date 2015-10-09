@@ -3,7 +3,7 @@ package service
 import akka.actor.{ActorRef, ActorLogging, Props}
 import akka.stream.actor.ActorSubscriberMessage.{OnComplete, OnError, OnNext}
 import akka.stream.actor.{ActorSubscriber, ZeroRequestStrategy}
-import model.Packets
+import model.{Packet, Packets}
 
 
 class Handler(store:ActorRef) extends ActorSubscriber with ActorLogging {
@@ -15,13 +15,8 @@ class Handler(store:ActorRef) extends ActorSubscriber with ActorLogging {
   }
 
   def receive = {
-    case OnNext(msg: Option[Packets]) => {
-      msg match {
-        case Some(p) => {
-          store ! Persist(p)
-        }
-        case None => log.error("Unknown message received")
-      }
+    case OnNext(msg: Packet) => {
+      store ! Persist(msg)
       request(1)
     }
     case OnComplete => log.debug("Stream completed")
