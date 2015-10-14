@@ -37,15 +37,16 @@ class RootActor(hazelcastInstance:HazelcastInstance, config:Config) extends Acto
   private def storeGatewayStatus(gatewayStatus:GatewayStatus) = gatewayStatuses.add(gatewayStatus)
 
   def receive = {
-    case Persist(msg) => {
+    case Persist(msg) =>
       msg match {
         case loraPacket:Packet => handlePacket(loraPacket)
         //case gatewayStatus:GatewayStatus => storeGatewayStatus(gatewayStatus)
       }
-    }
+    case Purge(datetime) =>
+      //TODO for now clears packet store, in future needs to clear packets older then specified datetime
+      hazelcastInstance.getMap[String, Vector[Packet]](config.getString("app.hazelcast.packet-store")).clear()
     case Status => {
       //TODO find another way to get a status of this system. this can OOM on large actor systems
-      println(ActorHelper.printTree(self))
       sender ! ActorHelper.printTree(self)
     }
   }

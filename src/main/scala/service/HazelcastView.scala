@@ -20,8 +20,8 @@ class HazelcastView(hazelcastClient:HazelcastInstance, config:Config) extends Ac
       sender ! packets.toMap[String, Vector[Packet]]
     }
     case Get(id) => sender ! packets.get(id)
-    case StatusAll => sender ! gatewayStatuses.to[Set[GatewayStatus]]
-    case Status(id) => sender ! gatewayStatuses.filter(_.Gateway == id).to[Set[GatewayStatus]]
+    case StatusAll => sender ! gatewayStatuses
+    case Status(id) => sender ! gatewayStatuses.filter(_.Gateway == id)
   }
 }
 

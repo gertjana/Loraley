@@ -23,7 +23,6 @@ class ChildActor(hazelcastInstance:HazelcastInstance, config:Config) extends Act
       else {
         packets.put(deviceId, Vector(payload))
       }
-      println(s"resulting size = ${packets.size}")
     } else if (children.contains(rest.head)) {
       children.get(rest.head) match {
         case Some(child:ActorRef) => {

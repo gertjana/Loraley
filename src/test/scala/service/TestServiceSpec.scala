@@ -140,6 +140,7 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
     }
 
     "Create a bunch of actors with similar addresses" in {
+      testStorage ! Purge(DateTime.now.minusYears(1))
 
       Thread.sleep(100)
 
@@ -150,16 +151,17 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
         val packet = loraPacket.replace("00:01:FF:AA", address).parseJson.convertTo[LoraPacket]
         testListener ! Udp.Received(data(packet), localAddress)
       }
-//      val status = (testStorage ? Status).mapTo[String]
-//      println(status)
 
+      val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[Packet]]], 5.seconds)
 
+      result.size should be(4)
+      result.keys.toList.sorted should be(addresses.map(_.replace(":","")))
     }
 
     "convert an incoming packet" in {
       val result = Main.extractPacket(loraPacket)
       result.size should be(1)
-      result.head.PHYPayload.get.DevAddr should be("00:11:FF:AA")
+      result.head.PHYPayload.get.DevAddr should be("00:01:FF:AA")
     }
   }
 
