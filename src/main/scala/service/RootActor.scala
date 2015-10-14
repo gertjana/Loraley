@@ -29,7 +29,7 @@ class RootActor(hazelcastInstance:HazelcastInstance, config:Config) extends Acto
           newChild ! (packet, deviceId, deviceId.tail)
         }
       }
-      case None => println("no device address");log.error(s"could not find a device address in the payload: $packet")
+      case None => log.error(s"could not find a device address in the payload: $packet")
     }
 
   }

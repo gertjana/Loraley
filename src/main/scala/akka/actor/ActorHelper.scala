@@ -5,6 +5,7 @@ import akka.event.Logging
 
 object ActorHelper {
 
+  //Blantantly copied from Akka sourcecode ;)
   //be very careful using this in production, can cause OOM Exceptions and performance issues
   def printTree(root:ActorRef): String = {
     def printNode(node: ActorRef, indent: String): String = {
@@ -34,7 +35,7 @@ object ActorHelper {
               val children = cell.childrenRefs.children.toSeq.sorted
               val bulk = children.dropRight(1) map (printNode(_, indent + "   |"))
               bulk ++ (children.lastOption map (printNode(_, indent + "    ")))
-            } mkString ("\n"))
+            } mkString "\n")
         case _ ⇒
           indent + node.path.name + " " + Logging.simpleName(node)
       }
