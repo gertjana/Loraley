@@ -29,15 +29,14 @@ object Main extends Protocols {
 
   val log = Logging.getLogger(system,this)
 
+  val hazelcastInstance = Hazelcast.newHazelcastInstance(new Config())
+  val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
+
   def main(args:Array[String]) = {
     val config = new Configuration(Try(args(0)).toOption).config
 
-    val hazelcastConfig = new Config()
-    val hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConfig)
-    val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
-
     def viewActor = system.actorOf(HazelcastView.props(hazelcastClient, config))
-    def storeActor = system.actorOf(RootActor.props(hazelcastInstance,config))
+    def storeActor = system.actorOf(RootActor.props(hazelcastInstance, config))
 
     val httpService = new HttpService(viewActor, storeActor)
     Http().bindAndHandle(httpService.routes, config.getString("app.http.address"), config.getInt("app.http.port"))
@@ -73,11 +72,13 @@ object Main extends Protocols {
   }
 
   //slightly different approach ignores anything outside of the [ .. ] before trying to parse it to Json
-  private def extractPacket(text:String):List[Packet] = {
+  def extractPacket(text:String):List[Packet] = {
     if (text.contains("[") && text.contains("]")) {
       val packets = text.substring(text.indexOf('['), text.lastIndexOf(']')+1)
       Try{packets.parseJson.convertTo[List[Packet]]}.toOption match {
-        case Some(p) => p
+        case Some(p) =>
+          log.info(s"Parsed packet $p")
+          p
         case None =>
           log.error(s"unable to parse $packets")
           Nil

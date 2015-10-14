@@ -9,17 +9,19 @@ import scala.collection.JavaConversions._
 
 class HazelcastView(hazelcastClient:HazelcastInstance, config:Config) extends Actor with ActorLogging {
 
-  val packets:Map[String, Vector[Packet]] =
-    hazelcastClient.getMap[String, Vector[Packet]](config.getString("app.hazelcast.packetstore")).toMap
+  val packets =
+    hazelcastClient.getMap[String, Vector[Packet]](config.getString("app.hazelcast.packet-store"))
 
-  val gatewayStatuses:Set[GatewayStatus] =
-    hazelcastClient.getSet[GatewayStatus](config.getString("app.hazelcast.gatewaystore")).to[Set]
+  val gatewayStatuses =
+    hazelcastClient.getSet[GatewayStatus](config.getString("app.hazelcast.gateway-store"))
 
   def receive = {
-    case GetAll  => sender ! packets
+    case GetAll  => {
+      sender ! packets.toMap[String, Vector[Packet]]
+    }
     case Get(id) => sender ! packets.get(id)
-    case StatusAll => sender ! gatewayStatuses
-    case Status(id) => sender ! gatewayStatuses.filter(_.Gateway == id)
+    case StatusAll => sender ! gatewayStatuses.to[Set[GatewayStatus]]
+    case Status(id) => sender ! gatewayStatuses.filter(_.Gateway == id).to[Set[GatewayStatus]]
   }
 }
 

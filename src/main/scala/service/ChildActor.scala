@@ -2,7 +2,7 @@ package service
 
 import akka.actor.{Props, ActorRef, ActorLogging, Actor}
 import com.hazelcast.core.HazelcastInstance
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.Config
 import model.Packet
 
 import scala.collection.mutable
@@ -16,9 +16,14 @@ class ChildActor(hazelcastInstance:HazelcastInstance, config:Config) extends Act
   private def handleMessage(payload:Packet, deviceId:String, rest:String) = {
     val persist = rest.length <= config.getInt("app.actor-depth")
     if (persist) {
-      val packets = hazelcastInstance.getMap[String, Vector[Packet]](config.getString("app.hazelcast.packetstore"))
-      if (packets.containsKey(deviceId)) packets.put(deviceId, packets.get(deviceId) :+payload)
-      else packets.put(deviceId, Vector(payload))
+      val packets = hazelcastInstance.getMap[String, Vector[Packet]](config.getString("app.hazelcast.packet-store"))
+      if (packets.containsKey(deviceId)) {
+        packets.put(deviceId, packets.get(deviceId) :+payload)
+      }
+      else {
+        packets.put(deviceId, Vector(payload))
+      }
+      println(s"resulting size = ${packets.size}")
     } else if (children.contains(rest.head)) {
       children.get(rest.head) match {
         case Some(child:ActorRef) => {
@@ -30,8 +35,8 @@ class ChildActor(hazelcastInstance:HazelcastInstance, config:Config) extends Act
       val newChild = context.actorOf(ChildActor.props(hazelcastInstance, config),childActorName(deviceId,rest))
       children.put(rest.head, newChild)
       newChild ! (payload, deviceId,rest.tail)
-
     }
+
   }
 
   def receive = {

@@ -9,12 +9,11 @@ import akka.stream.{Materializer, ActorMaterializer}
 import akka.testkit.{TestKit, TestActorRef}
 import akka.util.{ByteString, Timeout}
 import akka.pattern.ask
+import boot.Main
 import com.hazelcast.client.HazelcastClient
-import com.hazelcast.client.config.ClientConfig
-import com.hazelcast.config.Config
 import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigFactory
-import model.LoraPacket
+import model.{Packet, LoraPacket}
 import org.joda.time.DateTime
 import org.scalatest._
 
@@ -35,17 +34,11 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
 
   val config = ConfigFactory.load("test.application.conf")
 
-  // Hazelcast
-  val hazelcastConfig = new Config()
-  hazelcastConfig.setProperty( "hazelcast.logging.type", "none" )
-  val hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConfig)
-  val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
-  val testStorage = TestActorRef[RootActor](RootActor.props(hazelcastInstance, config))
-  val testView = TestActorRef[HazelcastView](HazelcastView.props(hazelcastClient, config))
+  val testStorage = TestActorRef[RootActor](RootActor.props(Main.hazelcastInstance, config))
+  val testView = TestActorRef[HazelcastView](HazelcastView.props(Main.hazelcastInstance, config))
 
   val testListener = TestActorRef[Listener](Listener.props(localAddress))
   val testHandler = TestActorRef[Handler](Handler.props(testStorage))
-
 
   boot.Main.composeStream(testListener, testHandler).run()
 
@@ -108,11 +101,18 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
   }
 
 
-  "The Service" should {
-    "be able to store Lora Packets when receiving udp packets" in {
-      testStorage ! Purge(DateTime.now().minusYears(100))
 
-      Thread.sleep(100)
+  "The Service" should {
+
+    "be able to store and retreive data from hazelcast" in {
+      val packets = Main.hazelcastInstance.getMap[String, String]("test-map")
+      packets.put("foo", "bar")
+
+      val result = Main.hazelcastClient.getMap[String, String]("test-map")
+      result.get("foo") === "bar"
+    }
+
+    "be able to store Lora Packets when receiving udp packets" in {
 
       testListener ! Udp.Bound(localAddress)
       testListener ! Udp.Received(data(loraPacket1), localAddress)
@@ -120,25 +120,26 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
       testListener ! Udp.Received(data(loraPacket3), localAddress)
 
       Thread.sleep(100)
-      val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[LoraPacket]]], 5.seconds)
+      val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[Packet]]], 5.seconds)
 
-      result.size === 2
+      result.size should be(3)
     }
 
     "Create a bunch of actors if messages with random id's are sent" in {
-      testStorage ! Purge(DateTime.now().minusYears(100))
 
       testListener ! Udp.Bound(localAddress)
       (1 to 100).foreach { i =>
         val packet = loraPacket.replace("00:01:FF:AA", randomAddress).parseJson.convertTo[LoraPacket]
         testListener ! Udp.Received(data(packet), localAddress)
       }
-      val status = (testStorage ? Status).mapTo[String]
-      println(status)
+
+      Thread.sleep(100)
+
+      val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[Packet]]], 5.seconds)
+      result.size should be > 0
     }
 
     "Create a bunch of actors with similar addresses" in {
-      testStorage ! Purge(DateTime.now().minusYears(100))
 
       Thread.sleep(100)
 
@@ -149,15 +150,24 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
         val packet = loraPacket.replace("00:01:FF:AA", address).parseJson.convertTo[LoraPacket]
         testListener ! Udp.Received(data(packet), localAddress)
       }
-      val status = (testStorage ? Status).mapTo[String]
-      println(status)
+//      val status = (testStorage ? Status).mapTo[String]
+//      println(status)
+
+
+    }
+
+    "convert an incoming packet" in {
+      val result = Main.extractPacket(loraPacket)
+      result.size should be(1)
+      result.head.PHYPayload.get.DevAddr should be("00:11:FF:AA")
     }
   }
 
 
 
   override protected def afterAll(): Unit = {
-    hazelcastInstance.shutdown()
+    Main.hazelcastInstance.shutdown()
+    Main.hazelcastClient.shutdown()
     Await.result(system.terminate(), 1.second)
   }
 

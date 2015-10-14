@@ -9,7 +9,7 @@ import scala.collection.mutable
 
 class RootActor(hazelcastInstance:HazelcastInstance, config:Config) extends Actor with ActorLogging {
   val children = mutable.Map[Char, ActorRef]()
-  val gatewayStatuses = hazelcastInstance.getSet[GatewayStatus](config.getString("app.hazelcast.gatewaystore"))
+  val gatewayStatuses = hazelcastInstance.getSet[GatewayStatus](config.getString("app.hazelcast.gateway-store"))
 
   private def childActorName(deviceId:String) = {
     s"child-${deviceId.head}-${deviceId.tail}"
@@ -29,7 +29,7 @@ class RootActor(hazelcastInstance:HazelcastInstance, config:Config) extends Acto
           newChild ! (packet, deviceId, deviceId.tail)
         }
       }
-      case None => log.error(s"could not find a device address in the payload: $packet")
+      case None => println("no device address");log.error(s"could not find a device address in the payload: $packet")
     }
 
   }
@@ -40,7 +40,6 @@ class RootActor(hazelcastInstance:HazelcastInstance, config:Config) extends Acto
     case Persist(msg) => {
       msg match {
         case loraPacket:Packet => handlePacket(loraPacket)
-
         //case gatewayStatus:GatewayStatus => storeGatewayStatus(gatewayStatus)
       }
     }

@@ -22,7 +22,8 @@ class Listener(address:InetSocketAddress) extends ActorPublisher[ByteString] wit
 
   def ready(socket: ActorRef): Receive = {
     case Udp.Received(data, remote) =>
-      log.debug("udp: " + toHexString(data))
+//      log.debug("udp: " + toHexString(data))
+//      log.debug(data.decodeString("UTF-8"))
       if (buffer.isEmpty && totalDemand > 0) {
         onNext(data)
       } else {

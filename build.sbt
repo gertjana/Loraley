@@ -1,5 +1,3 @@
-import com.typesafe.sbt.SbtNativePackager._
-
 name         := "Loraley"
 
 organization := "org.thethingsnetwork"
@@ -39,5 +37,9 @@ libraryDependencies ++= {
 fork := true
 
 enablePlugins(JavaAppPackaging)
+
+import NativePackagerHelper._
+
+mappings in Universal ++= directory("conf")
 
 mainClass in Compile := Some("boot.Main")

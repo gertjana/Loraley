@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.Directives._
 
 import akka.pattern.ask
 import akka.util.Timeout
-import model.LoraPacket
+import model.Packet
 import org.joda.time.format.ISODateTimeFormat
 import spray.json._
 
@@ -30,14 +30,14 @@ class HttpService(va:ActorRef, sa:ActorRef) extends Protocols {
     path("state") {
       get {
         complete {
-          (viewActor ? GetAll).mapTo[Map[String, Vector[LoraPacket]]]
+          (viewActor ? GetAll).mapTo[Map[String, Vector[Packet]]]
         }
       }
     } ~
       path("state" / Segment) { id =>
         get {
           complete {
-            (viewActor ? Get(id)).mapTo[Vector[LoraPacket]]
+            (viewActor ? Get(id)).mapTo[Vector[Packet]]
           }
         }
     } ~
