@@ -22,7 +22,7 @@ for instance 2 packets with address 00:11:FF:AA and 00:22:FF:AA wil be stored li
         
 
 to start
- - optionally configure address/ports in application.conf
+ - optionally configure address/ports in your own configuration file
  - `sbt run` or
  - `sbt universal:packageBin` to create a zip distribution unpack and run `bin/loraley`
  - Alternative configuration (samples in conf/) can be passed on the commandline, relative to the current directory
@@ -36,7 +36,9 @@ run as a cluster
   - start all with `bin/loraley conf/specific.conf`
 
  to do 
+  - fool prove packet conversion (f.i. handle encrypted messages)
   - gateway status support (Storage+API)
   - duplication detection (packets can come from multiple gateways) 
   - lifecycle management (remove old/stale data)
   - location awareness (should boston data appear on an amsterdam server?)
+  - subscribe to events (allow clients to get notified when data from a certain device arrives)
