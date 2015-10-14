@@ -91,10 +91,9 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
   val loraPacket2 = loraPacket.replace("00:01:FF:AA","00:01:FF:BB").parseJson.convertTo[LoraPacket]
   val loraPacket3 = loraPacket.replace("00:01:FF:AA","00:01:FF:CC").parseJson.convertTo[LoraPacket]
 
-  def data(p:LoraPacket) = ByteString(p.toJson.compactPrint)
+  def toByteString(p:LoraPacket) = ByteString(p.toJson.compactPrint)
 
   private def randomAddress:String = {
-    import scala.collection.JavaConversions._
     val bytes:Array[Byte] = Array[Byte](0,0,0,0)
     new scala.util.Random().nextBytes(bytes)
     bytes.map(b => String.format("%02x", b.asInstanceOf[java.lang.Byte])).mkString(":").toUpperCase
@@ -109,20 +108,21 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
       packets.put("foo", "bar")
 
       val result = Main.hazelcastClient.getMap[String, String]("test-map")
-      result.get("foo") === "bar"
+      result.get("foo") should be("bar")
     }
 
     "be able to store Lora Packets when receiving udp packets" in {
 
       testListener ! Udp.Bound(localAddress)
-      testListener ! Udp.Received(data(loraPacket1), localAddress)
-      testListener ! Udp.Received(data(loraPacket2), localAddress)
-      testListener ! Udp.Received(data(loraPacket3), localAddress)
+      testListener ! Udp.Received(toByteString(loraPacket1), localAddress)
+      testListener ! Udp.Received(toByteString(loraPacket2), localAddress)
+      testListener ! Udp.Received(toByteString(loraPacket3), localAddress)
 
       Thread.sleep(100)
       val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[Packet]]], 5.seconds)
 
       result.size should be(3)
+      result.keys.toList.sorted should be(List("00:01:FF:AA","00:01:FF:BB","00:01:FF:CC").map(_.replace(":","")))
     }
 
     "Create a bunch of actors if messages with random id's are sent" in {
@@ -130,7 +130,7 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
       testListener ! Udp.Bound(localAddress)
       (1 to 100).foreach { i =>
         val packet = loraPacket.replace("00:01:FF:AA", randomAddress).parseJson.convertTo[LoraPacket]
-        testListener ! Udp.Received(data(packet), localAddress)
+        testListener ! Udp.Received(toByteString(packet), localAddress)
       }
 
       Thread.sleep(100)
@@ -149,9 +149,10 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
       val addresses = List("01:23:45:67", "01:24:45:67", "02:23:45:67", "02:24:45:67")
       addresses.foreach { address =>
         val packet = loraPacket.replace("00:01:FF:AA", address).parseJson.convertTo[LoraPacket]
-        testListener ! Udp.Received(data(packet), localAddress)
+        testListener ! Udp.Received(toByteString(packet), localAddress)
       }
 
+      Thread.sleep(100)
       val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[Packet]]], 5.seconds)
 
       result.size should be(4)
