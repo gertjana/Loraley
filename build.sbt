@@ -22,8 +22,6 @@ libraryDependencies ++= {
     "com.typesafe.akka"           %% "akka-http-experimental"               % akkaStreamV,
     "com.typesafe.akka"           %% "akka-http-spray-json-experimental"    % akkaStreamV,
     "com.typesafe.akka"           %% "akka-http-testkit-experimental"       % akkaStreamV,
-    "org.iq80.leveldb"            % "leveldb"                               % "0.7",
-    "org.fusesource.leveldbjni"   % "leveldbjni-all"                        % "1.8",
     "joda-time"                   % "joda-time"                             % "2.6",
     "org.joda"                    % "joda-convert"                          % "1.7",
     "com.hazelcast"               % "hazelcast"                             % "3.2",
