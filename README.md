@@ -1,14 +1,14 @@
 # Loraley
 
-Test project that uses
+LoRaWan backend that uses
  - Akka Http (UDP / HTTP connection)
  - Akka Reactive Streams (parse/transform udp packets)
- - Akka Actor
+ - Akka Actors
  - Hazelcast (store package information)
  
-Actor Model
+## Actor Model
 
-Uses hierarchical model 
+### Uses hierarchical model 
 
 for instance 2 packets with address 00:11:FF:AA and 00:22:FF:AA wil be stored like:
 
@@ -21,7 +21,7 @@ for instance 2 packets with address 00:11:FF:AA and 00:22:FF:AA wil be stored li
             \-> 2 (package 00:22:FF:AA will be stored here)
         
 
-to start
+## To start
  - optionally configure address/ports in your own configuration file
  - `sbt run` or
  - `sbt universal:packageBin` to create a zip distribution unpack and run `bin/loraley`
@@ -29,16 +29,22 @@ to start
    - `sbt "run conf/my.conf"`
    - `bin/loraley conf/my.conf`
 
-run as a cluster
+## Run as a cluster
  - create multiple distributions using `sbt universal:packageBin` and add a specific configuration for it (see conf/ for examples)
   - enable udp on only one
   - make sure http and hazelcast ports are unique 
   - start all with `bin/loraley conf/specific.conf`
+  
+## Test
+  - `sbt test` to run some local tests
+  - with `cat samples/packet.json | nc -4u -w1 [host] [port]` you can send some example messages to it `
 
- to do 
-  - fool prove packet conversion (f.i. handle encrypted messages)
+## To Do 
+  - fool proof packet conversion (f.i. handle encrypted messages)
   - gateway status support (Storage+API)
   - duplication detection (packets can come from multiple gateways) 
   - lifecycle management (remove old/stale data)
   - location awareness (should boston data appear on an amsterdam server?)
   - subscribe to events (allow clients to get notified when data from a certain device arrives)
+  - Simple UI, display/search/filter on packet/gateway info
+  
