@@ -18,24 +18,21 @@ class ChildActor(hazelcastInstance:HazelcastInstance, config:Config) extends Act
     if (persist) {
       val packets = hazelcastInstance.getMap[String, Vector[Packet]](config.getString("app.hazelcast.packet-store"))
       if (packets.containsKey(deviceId)) {
-        packets.put(deviceId, packets.get(deviceId) :+payload)
+        packets.put(deviceId, packets.get(deviceId) :+ payload)
       }
       else {
         packets.put(deviceId, Vector(payload))
       }
-    } else if (children.contains(rest.head)) {
-      children.get(rest.head) match {
-        case Some(child:ActorRef) => {
-          child ! (payload, deviceId, rest.tail)
-        }
-        case None => log.error(s"Child Actor ${childActorName(deviceId,rest)} not found, something is wrong")
-      }
     } else {
-      val newChild = context.actorOf(ChildActor.props(hazelcastInstance, config),childActorName(deviceId,rest))
-      children.put(rest.head, newChild)
-      newChild ! (payload, deviceId,rest.tail)
+      children.get(rest.head) match {
+        case Some(child:ActorRef) =>
+          child ! (payload, deviceId, rest.tail)
+        case None =>
+          val newChild = context.actorOf(ChildActor.props(hazelcastInstance, config),childActorName(deviceId,rest))
+          children.put(rest.head, newChild)
+          newChild ! (payload, deviceId,rest.tail)
+      }
     }
-
   }
 
   def receive = {
