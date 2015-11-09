@@ -34,6 +34,11 @@ for instance 2 packets with address 00:11:FF:AA and 00:22:FF:AA wil be stored li
   - enable udp on only one
   - make sure http and hazelcast ports are unique 
   - start all with `bin/loraley conf/specific.conf`
+
+## Docker
+ - optionally add your config to the conf directory
+ - execute `docker build -t <tag> .` after `sbt universal:packageBin` to build a docker image
+ - run it with `docker run -e conf=conf/your.conf -p 1337:1337 -p 1338:1338\udp --name loraley <tag>`  
   
 ## Test
   - `sbt test` to run some local tests
