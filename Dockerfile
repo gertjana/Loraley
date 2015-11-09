@@ -1,6 +1,6 @@
 FROM java:8
 
-EXPOSE 1337 1338/udp 5700 5701 5702 5703 5704
+EXPOSE 1337 1338/udp 5701
 
 RUN mkdir /app
 ADD target/universal/loraley-1.0.zip /tmp/loraley.zip

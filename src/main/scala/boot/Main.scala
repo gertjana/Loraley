@@ -13,6 +13,7 @@ import com.hazelcast.client.HazelcastClient
 import com.hazelcast.client.config.ClientConfig
 import com.hazelcast.config.Config
 import com.hazelcast.core.Hazelcast
+import com.typesafe.config.ConfigValue
 import model.{Packet, Packets, GatewayStatus, LoraPacket}
 import service._
 import spray.json._
@@ -29,11 +30,27 @@ object Main extends Protocols {
 
   val log = Logging.getLogger(system,this)
 
-  val hazelcastInstance = Hazelcast.newHazelcastInstance(new Config())
-  val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
 
   def main(args:Array[String]) = {
     val config = new Configuration(Try(args(0)).toOption).config
+
+    val hazelcastConfig = new Config()
+
+    if (config.hasPath("app.hazelcast.host")) {
+      log.debug("enabling tcp/ip join")
+      val hosts:List[String] = config.getStringList("app.hazelcast.host.ip").toList
+
+      val networkConfig = hazelcastConfig.getNetworkConfig
+      val joinConfig = networkConfig.getJoin
+      val tcpIpConfig = joinConfig.getTcpIpConfig.setEnabled(true)
+
+      joinConfig.getMulticastConfig.setEnabled(false)
+
+      hosts.map(host => tcpIpConfig.addMember(host))
+    }
+
+    val hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConfig)
+    val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
 
     def viewActor = system.actorOf(HazelcastView.props(hazelcastClient, config))
     def storeActor = system.actorOf(RootActor.props(hazelcastInstance, config))
