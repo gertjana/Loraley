@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.Directives._
 
 import akka.pattern.ask
 import akka.util.Timeout
-import model.Packet
+import model._
 import org.joda.time.format.ISODateTimeFormat
 import spray.json._
 
@@ -23,7 +23,7 @@ class HttpService(va:ActorRef, sa:ActorRef) extends Protocols {
     path("status") {
       get {
         complete {
-          OK
+          (viewActor ? StatusAll).mapTo[Map[GatewayMac, Stat]]
         }
       }
     } ~

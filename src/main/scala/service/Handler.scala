@@ -3,7 +3,7 @@ package service
 import akka.actor.{ActorRef, ActorLogging, Props}
 import akka.stream.actor.ActorSubscriberMessage.{OnComplete, OnError, OnNext}
 import akka.stream.actor.{ActorSubscriber, ZeroRequestStrategy}
-import model.{Packet, Packets}
+import model.PushData
 
 
 class Handler(store:ActorRef) extends ActorSubscriber with ActorLogging {
@@ -15,7 +15,7 @@ class Handler(store:ActorRef) extends ActorSubscriber with ActorLogging {
   }
 
   def receive = {
-    case OnNext(msg: Packet) => {
+    case OnNext(msg: PushData) => {
       store ! Persist(msg)
       request(1)
     }

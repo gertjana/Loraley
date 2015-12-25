@@ -6,6 +6,7 @@ import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.io.{IO, Udp}
 import akka.stream.actor.ActorPublisher
 import akka.util.ByteString
+import utils.HexBytesUtil
 
 
 class Listener(address:InetSocketAddress) extends ActorPublisher[ByteString] with ActorLogging {
@@ -22,7 +23,7 @@ class Listener(address:InetSocketAddress) extends ActorPublisher[ByteString] wit
 
   def ready(socket: ActorRef): Receive = {
     case Udp.Received(data, remote) =>
-//      log.debug("udp: " + toHexString(data))
+//      log.debug("udp: " + HexBytesUtil.bytes2hex(data))
 //      log.debug(data.decodeString("UTF-8"))
       if (buffer.isEmpty && totalDemand > 0) {
         onNext(data)

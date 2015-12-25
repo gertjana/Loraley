@@ -14,7 +14,7 @@ import com.hazelcast.client.config.ClientConfig
 import com.hazelcast.config.Config
 import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigValue
-import model.{Packet, Packets, GatewayStatus, LoraPacket}
+import model._
 import service._
 import spray.json._
 
@@ -30,27 +30,12 @@ object Main extends Protocols {
 
   val log = Logging.getLogger(system,this)
 
+  val hazelcastConfig = new Config()
+  val hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConfig)
+  val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
 
   def main(args:Array[String]) = {
     val config = new Configuration(Try(args(0)).toOption).config
-
-    val hazelcastConfig = new Config()
-
-    if (config.hasPath("app.hazelcast.host")) {
-      log.debug("enabling tcp/ip join")
-      val hosts:List[String] = config.getStringList("app.hazelcast.host.ip").toList
-
-      val networkConfig = hazelcastConfig.getNetworkConfig
-      val joinConfig = networkConfig.getJoin
-      val tcpIpConfig = joinConfig.getTcpIpConfig.setEnabled(true)
-
-      joinConfig.getMulticastConfig.setEnabled(false)
-
-      hosts.map(host => tcpIpConfig.addMember(host))
-    }
-
-    val hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConfig)
-    val hazelcastClient = HazelcastClient.newHazelcastClient(new ClientConfig())
 
     def viewActor = system.actorOf(HazelcastView.props(hazelcastClient, config))
     def storeActor = system.actorOf(RootActor.props(hazelcastInstance, config))
@@ -79,30 +64,10 @@ object Main extends Protocols {
   def composeStream(publisher:ActorRef, subscriber:ActorRef) = {
 
     val source: Source[ByteString, _] = Source(ActorPublisher[ByteString](publisher))
-    val sink: Sink[Packet, _] = Sink(ActorSubscriber[Packet](subscriber))
+    val sink: Sink[PushData, _] = Sink(ActorSubscriber[PushData](subscriber))
 
     source
-      .map(_.decodeString("UTF-8").trim)
-      .map(extractPacket)
-      .mapConcat(identity)
+      .map(PushData(_))
       .to(sink)
-  }
-
-  //slightly different approach ignores anything outside of the [ .. ] before trying to parse it to Json
-  def extractPacket(text:String):List[Packet] = {
-    if (text.contains("[") && text.contains("]")) {
-      val packets = text.substring(text.indexOf('['), text.lastIndexOf(']')+1)
-      Try{packets.parseJson.convertTo[List[Packet]]}.toOption match {
-        case Some(p) =>
-          log.info(s"Parsed packet $p")
-          p
-        case None =>
-          log.error(s"unable to parse $packets")
-          Nil
-      }
-    } else {
-      log.error(s"unable to recognize packet: $text")
-      Nil
-    }
   }
 }

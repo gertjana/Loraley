@@ -13,7 +13,7 @@ import boot.Main
 import com.hazelcast.client.HazelcastClient
 import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigFactory
-import model.{Packet, LoraPacket}
+import model.{Stat, GatewayStatus, Packet, LoraPacket}
 import org.joda.time.DateTime
 import org.scalatest._
 
@@ -42,10 +42,14 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
 
   boot.Main.composeStream(testListener, testHandler).run()
 
+  val prefix1 = ByteString(0x01,0xfc,0xa5,0x00)
+  val prefix2 = ByteString(0x1d,0xee,0x07,0xf0,0x02,0x78,0x68,0x23) // Gateway mac
+
+  val protocol = prefix1 ++ prefix2
+
   val loraPacket =
     """
       |{
-      |  "Gateway" : "AA:55:5A:00:00:04:DA:AD",
       |  "rxpk" : [ {
       |    "tmst" : 27938596,
       |    "time" : "2015-09-25T15:27:10.963607Z",
@@ -87,19 +91,62 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
       |}
     """.stripMargin
 
+  val statusPacket =
+    """
+      |{
+      |    "time":"2015-12-20 19:49:03 GMT",
+      |    "lati":52.29078,
+      |    "long":4.83783,
+      |    "alti":4,
+      |    "rxnb":0,
+      |    "rxok":0,
+      |    "rxfw":0,
+      |    "ackr":50.0,
+      |    "dwnb":0,
+      |    "txnb":0,
+      |    "pfrm":"Lorank",
+      |    "mail":"gertjan.assies@gmail.com",
+      |    "desc":"Gertjan Bovenkerk"
+      |}
+    """.stripMargin
+
+  val otherPacket =
+    """
+      | [
+      |  {
+      |   "tmst":10302323,
+      |   "time":"2015-10-06T20:53:25.259081Z",
+      |   "chan":4,
+      |   "rfch":0,
+      |   "freq":867.300000,
+      |   "stat":1,
+      |   "modu":"LORA",
+      |   "datr":"SF7BW125",
+      |   "codr":"4/5",
+      |   "lsnr":10.8,
+      |   "rssi":-45,
+      |   "size":41,
+      |   "data":"gAAB/6oAAQAGKLMkiYHDEKINsqL2czPhIKAgHNbAeqTITvCcQZeMdbI="
+      |  }
+      | ]
+    """.stripMargin
+
+
   val loraPacket1 = loraPacket.parseJson.convertTo[LoraPacket]
   val loraPacket2 = loraPacket.replace("00:01:FF:AA","00:01:FF:BB").parseJson.convertTo[LoraPacket]
   val loraPacket3 = loraPacket.replace("00:01:FF:AA","00:01:FF:CC").parseJson.convertTo[LoraPacket]
 
-  def toByteString(p:LoraPacket) = ByteString(p.toJson.compactPrint)
+
+  val statJson = statusPacket.parseJson
+  val statPacket1 = statJson.convertTo[Stat]
+
+  def toByteString(p:LoraPacket) = protocol ++ ByteString(p.toJson.compactPrint)
 
   private def randomAddress:String = {
     val bytes:Array[Byte] = Array[Byte](0,0,0,0)
     new scala.util.Random().nextBytes(bytes)
     bytes.map(b => String.format("%02x", b.asInstanceOf[java.lang.Byte])).mkString(":").toUpperCase
   }
-
-
 
   "The Service" should {
 
@@ -159,14 +206,7 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
       result.keys.toList.sorted should be(addresses.map(_.replace(":","")))
     }
 
-    "convert an incoming packet" in {
-      val result = Main.extractPacket(loraPacket)
-      result.size should be(1)
-      result.head.PHYPayload.get.DevAddr should be("00:01:FF:AA")
-    }
   }
-
-
 
   override protected def afterAll(): Unit = {
     Main.hazelcastInstance.shutdown()

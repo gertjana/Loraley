@@ -1,10 +1,10 @@
 package service
 
-import model.Packet
+import model.PushData
 import org.joda.time.DateTime
 
 sealed trait StorageMessages
-final case class Persist(msg:Packet) extends StorageMessages
+final case class Persist(msg:PushData) extends StorageMessages
 final case class Purge(datetime:DateTime) extends StorageMessages
 case object Status extends StorageMessages
 
