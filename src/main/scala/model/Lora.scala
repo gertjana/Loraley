@@ -18,11 +18,11 @@ case class PushData(
 case object PushData {
   def apply(bytes:ByteString):PushData = {
     PushData(
-      version = bytes.slice(0,1).head,
-      token = Token(bytes.slice(1,3)),
-      identifier = bytes.slice(3,4).head,
-      gatewayMac = GatewayMac(bytes.slice(4,12)),
-      data = LoraPacket().fromBytesString(bytes.slice(12,bytes.size))
+      version     = bytes.slice(0,1).head,
+      token       = Token(bytes.slice(1,3)),
+      identifier  = bytes.slice(3,4).head,
+      gatewayMac  = GatewayMac(bytes.slice(4,12)),
+      data        = LoraPacket().fromBytesString(bytes.slice(12,bytes.size))
     )
   }
 }
