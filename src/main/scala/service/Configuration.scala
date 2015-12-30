@@ -12,7 +12,6 @@ class Configuration(optFile:Option[String]) extends Logging {
       val pathOfFile = Paths.get("").toAbsolutePath.toString + FileSystems.getDefault.getSeparator + file
 
       val f = new File(pathOfFile)
-      println(f)
       if (f.exists()) {
         log.info(s"Loading Configuration: $pathOfFile")
         ConfigFactory.parseFile(f)

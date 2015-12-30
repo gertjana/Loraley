@@ -31,6 +31,7 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
   implicit val log: LoggingAdapter = Logging(system, this.getClass)
 
   val localAddress = new InetSocketAddress("127.0.0.1",9999)
+  val remoteAddress = new InetSocketAddress("127.0.0.1", 8888)
 
   val config = ConfigFactory.load("test.application.conf")
 
@@ -46,6 +47,7 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
   val prefix2 = ByteString(0x1d,0xee,0x07,0xf0,0x02,0x78,0x68,0x23) // Gateway mac
 
   val protocol = prefix1 ++ prefix2
+  val acknowledge = ByteString(0x01,0xfc,0xa5,0x01)
 
   val loraPacket =
     """
@@ -159,35 +161,24 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
     }
 
     "be able to store Lora Packets when receiving udp packets" in {
+      testStorage ! Purge(DateTime.now.minusYears(1))
+      Thread.sleep(100)
+
 
       testListener ! Udp.Bound(localAddress)
       testListener ! Udp.Received(toByteString(loraPacket1), localAddress)
       testListener ! Udp.Received(toByteString(loraPacket2), localAddress)
       testListener ! Udp.Received(toByteString(loraPacket3), localAddress)
 
-      Thread.sleep(100)
+      Thread.sleep(200)
       val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[Packet]]], 5.seconds)
 
       result.size should be(3)
       result.keys.toList.sorted should be(List("00:01:FF:AA","00:01:FF:BB","00:01:FF:CC").map(_.replace(":","")))
     }
 
-    "Create a bunch of actors if messages with random id's are sent" in {
-
-      testListener ! Udp.Bound(localAddress)
-      (1 to 100).foreach { i =>
-        val packet = loraPacket.replace("00:01:FF:AA", randomAddress).parseJson.convertTo[LoraPacket]
-        testListener ! Udp.Received(toByteString(packet), localAddress)
-      }
-
-      Thread.sleep(100)
-
-      val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[Packet]]], 5.seconds)
-      result.size should be > 0
-    }
-
     "Create a bunch of actors with similar addresses" in {
-      testStorage ! Purge(DateTime.now.minusYears(1))
+      testStorage ! Purge(DateTime.now.minusYears(100))
 
       Thread.sleep(100)
 
@@ -199,11 +190,28 @@ class TestServiceSpec extends TestKit(ActorSystem("test-service-spec")) with Wor
         testListener ! Udp.Received(toByteString(packet), localAddress)
       }
 
-      Thread.sleep(100)
-      val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[Packet]]], 5.seconds)
+      Thread.sleep(200)
+      val result = Await.result((testView ? GetAll)
+                    .mapTo[Map[String, Vector[Packet]]], 5.seconds)
+                    .filterKeys(key => addresses.map(_.replace(":","")).contains(key))
 
       result.size should be(4)
       result.keys.toList.sorted should be(addresses.map(_.replace(":","")))
+    }
+
+    "Create a bunch of actors if messages with random id's are sent" in {
+      testStorage ! Purge(DateTime.now.minusYears(100))
+
+      testListener ! Udp.Bound(localAddress)
+      (1 to 100).foreach { i =>
+        val packet = loraPacket.replace("00:01:FF:AA", randomAddress).parseJson.convertTo[LoraPacket]
+        testListener ! Udp.Received(toByteString(packet), localAddress)
+      }
+
+      Thread.sleep(200)
+
+      val result = Await.result((testView ? GetAll).mapTo[Map[String, Vector[Packet]]], 5.seconds)
+      result.size should be > 0
     }
 
   }

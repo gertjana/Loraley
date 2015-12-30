@@ -11,8 +11,8 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf
 resolvers += "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/"
 
 libraryDependencies ++= {
-  val akkaV             = "2.4.0"
-  val akkaStreamV       = "1.0"
+  val akkaV             = "2.4.1"
+  val akkaStreamV       = "2.0"
   val scalaTestV        = "2.2.5"
   Seq(
     "com.typesafe.akka"           %% "akka-actor"                           % akkaV,

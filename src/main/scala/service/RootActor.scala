@@ -37,9 +37,7 @@ class RootActor(hazelcastInstance:HazelcastInstance, config:Config) extends Acto
   }
 
   private def handleStatus(gatewayStatus:GatewayStatus) = {
-    log.debug("got a status message: " + gatewayStatus)
     gatewayStatuses.put(gatewayStatus.gatewayMac, gatewayStatus.stat)
-    log.debug("hazelcast: " + gatewayStatuses.size())
   }
 
   def receive = {

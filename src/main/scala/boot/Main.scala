@@ -24,7 +24,7 @@ import scala.concurrent.duration._
 import scala.util.Try
 
 object Main extends Protocols {
-  implicit val system = ActorSystem("udp-streaming")
+  implicit val system = ActorSystem("loraley")
   implicit val executor = system.dispatcher
   implicit val materializer = ActorMaterializer()
 
@@ -63,8 +63,8 @@ object Main extends Protocols {
 
   def composeStream(publisher:ActorRef, subscriber:ActorRef) = {
 
-    val source: Source[ByteString, _] = Source(ActorPublisher[ByteString](publisher))
-    val sink: Sink[PushData, _] = Sink(ActorSubscriber[PushData](subscriber))
+    val source: Source[ByteString, _] = Source.fromPublisher(ActorPublisher[ByteString](publisher))
+    val sink: Sink[PushData, _] = Sink.fromSubscriber(ActorSubscriber[PushData](subscriber))
 
     source
       .map(PushData(_))

@@ -5,18 +5,25 @@ import service.Protocols
 import spray.json.JsObject
 import utils.HexBytesUtil
 
+object LoraProtocol {
+  val Version:Byte = 0x01
+  val PushDataIdentifier:Byte = 0x00
+  val PushAckIdentifier:Byte = 0x01
+}
+
+
 
 case class PushData(
-                     version: Byte = 0x01,
+                     version: Byte = LoraProtocol.Version,
                      token: Token,
-                     identifier: Byte = 0x00,
+                     identifier: Byte = LoraProtocol.PushDataIdentifier,
                      gatewayMac: GatewayMac,
                      data:LoraPacket
-                   ) {
-}
+                   )
 
 case object PushData {
   def apply(bytes:ByteString):PushData = {
+ //   assert(bytes.size > 14, "Data should be at least 14 bytes (header + {}")
     PushData(
       version     = bytes.slice(0,1).head,
       token       = Token(bytes.slice(1,3)),
@@ -114,6 +121,7 @@ object GatewayMac {
 }
 
 case class Token(value:ByteString) {
+  require(value.size == 2)
   override def toString = value.map(b => String.format("%02X", java.lang.Byte.valueOf(b))).mkString("")
 }
 
