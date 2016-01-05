@@ -26,6 +26,8 @@ libraryDependencies ++= {
     "org.joda"                    % "joda-convert"                          % "1.7",
     "com.hazelcast"               % "hazelcast"                             % "3.2",
     "com.hazelcast"               % "hazelcast-client"                      % "3.2",
+    "org.scodec"                  %% "scodec-core"                          % "1.8.3",
+    "org.scodec"                  %% "scodec-bits"                          % "1.0.12",
     "org.scalatest"               %% "scalatest"                            % scalaTestV % "test",
     "org.slf4s"                   %% "slf4s-api"                            % "1.7.12",
     "ch.qos.logback"              % "logback-classic"                       % "1.0.0" % "runtime"
