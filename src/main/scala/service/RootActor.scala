@@ -3,7 +3,7 @@ package service
 import akka.actor._
 import com.hazelcast.core.HazelcastInstance
 import com.typesafe.config.Config
-import model.{Stat, GatewayMac, GatewayStatus, Packet}
+import model._
 
 import scala.collection.mutable
 
@@ -16,24 +16,23 @@ class RootActor(hazelcastInstance:HazelcastInstance, config:Config) extends Acto
   }
 
   private def handlePacket(gatewayMac:GatewayMac, packet:Packet) = {
-    val deviceId:String = if (packet.PHYPayload.isDefined) {
-                      packet.PHYPayload.map(_.DevAddr.replace(":","")).get
-                    } else {
-                      //if we cant find a DevAddr store it in FFFFFFF
-                      "FFFFFFFF"
-                    }
+    Lora.decode(packet.data) match {
+      case Right(payload) => {
+        val deviceId = payload.DevAddr
+        if (children.contains(deviceId.head)) {
+          children.get(deviceId.head) match {
+            case Some(child:ActorRef) => child ! (payload,deviceId, deviceId.tail)
+            case None => log.error(s"Child Actor ${childActorName(deviceId)} not found, something is wrong")
+          }
+        } else {
+          val newChild = context.actorOf(ChildActor.props(hazelcastInstance, config),childActorName(deviceId))
+          children.put(deviceId.head, newChild)
+          newChild ! (payload, deviceId, deviceId.tail)
+        }
 
-    if (children.contains(deviceId.head)) {
-      children.get(deviceId.head) match {
-        case Some(child:ActorRef) => child ! (packet,deviceId, deviceId.tail)
-        case None => log.error(s"Child Actor ${childActorName(deviceId)} not found, something is wrong")
       }
-    } else {
-      val newChild = context.actorOf(ChildActor.props(hazelcastInstance, config),childActorName(deviceId))
-      children.put(deviceId.head, newChild)
-      newChild ! (packet, deviceId, deviceId.tail)
+      case Left(e) => log.debug("Error decoding payload", e.message)
     }
-
   }
 
   private def handleStatus(gatewayStatus:GatewayStatus) = {

@@ -32,7 +32,7 @@ trait Protocols extends DefaultJsonProtocol {
     override def read(json: JsValue): JsonData = JsonData(data=json.asJsObject)
   }
 
-  implicit val PayLoadFormat    = jsonFormat18(Payload)
+  implicit val PayLoadFormat    = jsonFormat15(Payload)
   implicit val PacketFormat     = jsonFormat14(Packet)
   implicit val StatFormat = jsonFormat13(Stat)
   implicit val GatewayStatusFormat = jsonFormat2(GatewayStatus)

@@ -3,7 +3,7 @@ package service
 import akka.actor.{Props, ActorRef, ActorLogging, Actor}
 import com.hazelcast.core.HazelcastInstance
 import com.typesafe.config.Config
-import model.Packet
+import model.{Payload, Packet}
 
 import scala.collection.mutable
 
@@ -13,10 +13,10 @@ class ChildActor(hazelcastInstance:HazelcastInstance, config:Config) extends Act
   private def childActorName(deviceId:String, rest:String) =
     s"child-${deviceId.substring(0,deviceId.length-rest.length)}-${rest.head}-${rest.tail}"
 
-  private def handleMessage(payload:Packet, deviceId:String, rest:String) = {
+  private def handleMessage(payload:Payload, deviceId:String, rest:String) = {
     val persist = rest.length <= config.getInt("app.actor-depth")
     if (persist) {
-      val packets = hazelcastInstance.getMap[String, Vector[Packet]](config.getString("app.hazelcast.packet-store"))
+      val packets = hazelcastInstance.getMap[String, Vector[Payload]](config.getString("app.hazelcast.packet-store"))
       if (packets.containsKey(deviceId)) {
         packets.put(deviceId, packets.get(deviceId) :+ payload)
       }
@@ -36,7 +36,7 @@ class ChildActor(hazelcastInstance:HazelcastInstance, config:Config) extends Act
   }
 
   def receive = {
-    case (payload:Packet, deviceId:String, rest:String) => {
+    case (payload:Payload, deviceId:String, rest:String) => {
       handleMessage(payload, deviceId, rest)
     }
   }

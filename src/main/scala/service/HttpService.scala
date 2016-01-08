@@ -20,24 +20,31 @@ class HttpService(va:ActorRef, sa:ActorRef) extends Protocols {
   implicit val timeout = Timeout(Duration(5,"seconds"))
 
   val routes =
-    path("status") {
+    path("gateways") {
       get {
         complete {
           (viewActor ? StatusAll).mapTo[Map[GatewayMac, Stat]]
         }
       }
     } ~
-    path("state") {
+    path("gateways" / Segment) { id =>
       get {
         complete {
-          (viewActor ? GetAll).mapTo[Map[String, Vector[Packet]]]
+          (viewActor ? StatusAll).mapTo[Map[GatewayMac, Stat]]
         }
       }
     } ~
-      path("state" / Segment) { id =>
+    path("nodes") {
+      get {
+        complete {
+          (viewActor ? GetAll).mapTo[Map[String, Vector[Payload]]]
+        }
+      }
+    } ~
+      path("nodes" / Segment) { id =>
         get {
           complete {
-            (viewActor ? Get(id)).mapTo[Vector[Packet]]
+            (viewActor ? Get(id)).mapTo[Vector[Payload]]
           }
         }
     } ~

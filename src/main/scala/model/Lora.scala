@@ -26,9 +26,9 @@ case object PushData {
  //   assert(bytes.size > 14, "Data should be at least 14 bytes (header + {}")
     PushData(
       version     = bytes.slice(0,1).head,
-      token       = Token(bytes.slice(1,3)),
+      token       = Token(bytes.slice(1,3).toArray),
       identifier  = bytes.slice(3,4).head,
-      gatewayMac  = GatewayMac(bytes.slice(4,12)),
+      gatewayMac  = GatewayMac(bytes.slice(4,12).toArray),
       data        = LoraPacket().fromBytesString(bytes.slice(12,bytes.size))
     )
   }
@@ -112,7 +112,7 @@ case class GatewayStatus(
                           stat:Stat
                         )
 
-case class GatewayMac(value:ByteString) {
+case class GatewayMac(value:Array[Byte]) {
   override def toString = value.map(b => String.format("%02X", java.lang.Byte.valueOf(b))).mkString("")
 }
 
@@ -120,7 +120,7 @@ object GatewayMac {
   def apply(hex:String):GatewayMac = GatewayMac(HexBytesUtil.hex2bytes(hex))
 }
 
-case class Token(value:ByteString) {
+case class Token(value:Array[Byte]) {
   require(value.size == 2)
   override def toString = value.map(b => String.format("%02X", java.lang.Byte.valueOf(b))).mkString("")
 }
@@ -128,24 +128,21 @@ case class Token(value:ByteString) {
 case class JsonData(data:JsObject)
 
 case class Payload(
-                    MHDR: String,
                     MType : Int,
                     Major : Int,
                     DevAddr : String,
-                    FCtrl : String,
                     ADR : Boolean,
                     ADRAckReq : Boolean,
                     ACK : Boolean,
-                    FoptsLen : Int,
                     FCnt : Int,
                     FOpts : String,
                     FPort : Int,
                     FRMPayload : String,
                     MIC : String,
                     validMsg : Boolean,
-                    plainHex : Option[String],
-                    plainAscii : Option[String],
-                    plainJson : Option[JsonData]
-                    )
+                    plainHex : Option[String] = None,
+                    plainAscii : Option[String] = None,
+                    plainJson : Option[JsonData] = None
+                  )
 
 
