@@ -2,6 +2,7 @@
 
 LoRaWan backend that uses
  - Akka Http (UDP / HTTP connection)
+ - scodec (decoding binary protocol)
  - Akka Reactive Streams (parse/transform udp packets)
  - Akka Actors
  - Hazelcast (store package information)
